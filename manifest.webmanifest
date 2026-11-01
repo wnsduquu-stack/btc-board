@@ -1,0 +1,15 @@
+{
+  "name": "BTC 봇 현황",
+  "short_name": "BTC 봇",
+  "description": "OKX 자동매매 봇 (v5·A0) 실전 현황 — 봇이 올린 대시보드 gist 를 읽기만 함",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
