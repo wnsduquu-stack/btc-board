@@ -166,6 +166,9 @@ details[open] .trade .chev { transform: rotate(90deg); }
 .why-box { background: var(--card2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
 .why-box .l { font-size: 12px; color: var(--ink2); display: block; margin-bottom: 1px; }
 .why-box p { margin: 0; overflow-wrap: anywhere; }
+.why-box p:first-child { font-weight: 600; }
+.why-box details.raw summary { font-size: 12px; color: var(--ink3); padding-top: 2px; }
+.why-box details.raw p { margin-top: 4px; }
 .empty { padding: 22px 16px; text-align: center; color: var(--ink2); font-size: 15px; }
 .banner { background: color-mix(in srgb, var(--bad) 12%, var(--card)); color: var(--ink); border-radius: 14px; padding: 12px 16px; font-size: 15px; display: grid; gap: 4px; }
 .banner.ok { background: color-mix(in srgb, var(--warn) 14%, var(--card)); }
@@ -315,6 +318,35 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
     return { tr, closed, open, start, cur, peak, dd, floor, used, streak };
   }
 
+  // ---- 근거를 쉬운 말로 (봇 기록은 주문 번호·자본뿐 → 규칙과 숫자로 풀어 씀. 사용자 11-01 "초등학생도 이해하기 쉽게") ----
+  function explain(t) {
+    const g = t.근거 || {}; const cap = capOf(t); const N = g.N; const sig = g.신호종가;
+    const bar = t.전략 === "v5" ? "하루짜리 봉 (일봉)" : "4시간짜리 봉";
+    const risk = cap != null ? cap * 0.01 : null; const dist = t.진입가 - t.손절선;
+    const why = String(t.청산이유 || ""); const isStop = /손절/.test(why); const isExit = /10/.test(why);
+    const out = [];
+    if (!t._out) out.push(["한 줄로", `규칙대로 사서 지금 들고 있어요. ${num(t.손절선, 1)} 까지 내려오면 자동으로 팔리는 주문이 거래소에 걸려 있어요.`]);
+    else if (isStop) out.push(["한 줄로", `"최근에 제일 높이 올라오면 따라 사고, 정해 둔 만큼 내려오면 바로 판다" 는 규칙대로 샀는데, 곧 내려와서 미리 정해 둔 작은 손해 (자산의 약 ${pct(Math.abs(t["손익%"] ?? 0.01), 1)}) 로 끝냈어요.`]);
+    else out.push(["한 줄로", `규칙대로 샀다가, 위로 가는 힘이 꺾이는 신호가 나와 ${t.R > 0 ? "이익" : "손해"} ${sUsd(t.손익)} (${sR(t.R)}) 로 팔았어요.`]);
+    out.push(["왜 샀나", `${bar}이 끝났을 때 마지막 값 (종가${sig ? " " + num(sig, 1) : ""}) 이 그 앞 20개 봉 중 가장 높았던 값보다 높았어요. "최근 20봉 중 제일 높이 올라왔다 = 위로 가는 힘이 생겼다" 고 보고, 다음 봉이 열리는 값 ${num(t.진입가, 1)} 에 샀어요.`]);
+    if (N) out.push(["손절선은 어떻게 정했나", `N 은 최근 20개 봉이 보통 얼마나 움직였나 (평균 폭) = ${num(N, 1)}. 신호 종가에서 N 의 2배 (${num(2 * N, 1)}) 아래인 ${num(t.손절선, 1)} 를 "여기까지 내려오면 틀린 것" 으로 정하고, 거래소에 자동 매도 주문을 미리 걸어 뒀어요. 봇이 꺼져도 이 주문은 살아 있어요.`]);
+    if (t.크기 && cap != null) out.push(["얼마나 샀나", `틀렸을 때 잃는 돈을 자산 ${num(cap, 2)} USDT 의 1% (약 ${num(risk, 1)} USDT) 로 맞췄어요. 손절선까지 거리 ${num(dist, 1)} 로 나누면 ${num(t.크기.BTC, 4)} BTC — 돈으로는 자산의 ${pct(t.크기.자산대비, 0)} 쯤이에요.`]);
+    if (t._out && isStop) out.push(["왜 팔았나", `값이 손절선 ${num(t.손절선, 1)} 까지 내려와, 걸어 둔 주문이 ${num(t.청산가, 1)} 에 팔렸어요.${t.손절선 - t.청산가 > 0 ? ` 손절선보다 ${num(t.손절선 - t.청산가, 1)} 낮게 팔린 건 값이 빨리 움직일 때 생기는 미끄러짐이에요.` : ""} 잃은 돈 ${num(Math.abs(t.손익 ?? 0), 1)} USDT = 계획한 1% 의 ${num(Math.abs(t.R ?? 0), 2)} 배 (${sR(t.R)}).`]);
+    else if (t._out && isExit) out.push(["왜 팔았나", `봉이 끝났을 때 값이 그 앞 10개 봉 중 가장 낮았던 값보다 낮아졌어요. "위로 가는 힘이 꺾였다" 고 보고 다음 봉이 열리는 값 ${num(t.청산가, 1)} 에 팔았어요. 결과 ${sUsd(t.손익)} (${sR(t.R)}).`]);
+    else if (t._out) out.push(["왜 팔았나", `봇이 규칙대로 ${num(t.청산가, 1)} 에 팔았어요 (기록된 이유: ${why}). 결과 ${sUsd(t.손익)} (${sR(t.R)}).`]);
+    return out;
+  }
+  function whyBox(t) {
+    const box = el("div", "why-box");
+    explain(t).forEach(([l, txt]) => { const p = el("p"); p.append(el("span", "l", l), txt); box.append(p); });
+    const g = t.근거 || {}; const raw = [["진입", g.진입], ["손절선식", g.손절선식], ["크기식", g.크기식], ["청산", g.청산근거]].filter(([, v]) => v);
+    if (raw.length) {
+      const d = el("details", "raw"); d.append(el("summary", null, "봇이 적은 원문 (주문 번호)"));
+      raw.forEach(([l, v]) => { const p = el("p", "small muted num"); p.textContent = `${l}: ${v}`; d.append(p); }); box.append(d);
+    }
+    return box;
+  }
+
   // ---- 그리기 ----
   function render() {
     const A = analyze(S.d); if (!C.sel || !A.tr.some((t) => t.id === C.sel)) { const last = A.tr.slice().sort((a, b) => (b._in || 0) - (a._in || 0))[0]; C.sel = last ? last.id : null; }
@@ -395,9 +427,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
     const head = el("div", "head"); const left = el("div"); left.append(el("span", "chip " + t.전략, t.전략 === "v5" ? "v5 일봉" : "A0 4시간"), " ", el("span", "small muted num", t.id || ""));
     head.append(left, el("span", "R num " + (t.R == null ? "" : cls(t.R)), t.R == null ? "들고 있음" : sR(t.R)));
     w.append(head, el("div", "line num", `▲ 진입 ${kst(t._in)} · ${num(t.진입가, 1)}` + (t._out ? `  ▼ 청산 ${kst(t._out)} · ${num(t.청산가, 1)} (${t.청산이유 || "—"})` : `  · 손절선 ${num(t.손절선, 1)} 걸림`)));
-    const g = t.근거 || {}; const box = el("div", "why-box");
-    [["왜 샀나", g.진입], ["손절선 셈", g.손절선식], ["크기 셈", g.크기식], ["왜 팔았나", g.청산근거]].forEach(([l, txt]) => { if (!txt) return; const p = el("p"); p.append(el("span", "l", l), String(txt)); box.append(p); });
-    if (box.childElementCount) w.append(box);
+    w.append(whyBox(t));
   }
   document.querySelectorAll(".seg [data-tf]").forEach((b) => b.addEventListener("click", () => {
     C.tf = b.dataset.tf; document.querySelectorAll(".seg [data-tf]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); drawChart();
@@ -535,10 +565,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
       kvr("번호", t.id || "—"); kvr("진입가", num(t.진입가, 1)); kvr("손절선", num(t.손절선, 1) + (t.첫손절선 && t.첫손절선 !== t.손절선 ? ` (첫 ${num(t.첫손절선, 1)})` : ""));
       kvr("청산가", t.청산가 == null ? "—" : num(t.청산가, 1)); kvr("크기", t.크기 ? `${num(t.크기.BTC, 4)} BTC · 자산의 ${pct(t.크기.자산대비, 0)}` : "—");
       if (t.근거 && t.근거.N) kvr("N (ATR 20)", num(t.근거.N, 1));
-      det.append(kv);
-      const g = t.근거 || {}; const w = el("div", "why-box");
-      [["왜 샀나", g.진입], ["손절선 셈", g.손절선식], ["크기 셈", g.크기식], ["왜 팔았나", g.청산근거]].forEach(([l, txt]) => { if (!txt) return; const p = el("p"); p.append(el("span", "l", l), String(txt)); w.append(p); });
-      if (w.childElementCount) det.append(w);
+      det.append(kv, whyBox(t));
       const toChart = el("button", "link-btn", "차트에서 보기 →"); toChart.type = "button"; toChart.addEventListener("click", () => select(t.id, true)); det.append(toChart);
       d.append(sm, det); box.append(d);
     });
