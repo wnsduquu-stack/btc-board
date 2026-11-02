@@ -218,7 +218,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   </section>
 
   <section class="group" aria-labelledby="h-lim">
-    <h2 id="h-lim"><span>멈춤선</span><span class="tag">제안값 · 확정 전</span></h2>
+    <h2 id="h-lim"><span>멈춤선</span><span class="tag">확정 2026-11-02</span></h2>
     <div class="card" id="limits"></div>
   </section>
 
@@ -242,7 +242,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   // 차트 봉은 OKX 공개 시세 (최근 300개) · 화살표 = 실전 거래 (▲ 진입 초록 · ▼ 청산 빨강, 사용자 10-19) · 시각은 한국.
   // gist 번호는 주소의 #gist=… 로 한 번 넣으면 이 기기에 저장됨 (파일 안에는 번호를 안 둠).
   const USER = "wnsduquu-stack";
-  const LINES = { ddWarn: 0.23, ddStop: 0.35, floorRatio: 0.65, streak: { v5: 8, A0: 10 }, staleMin: 250 }; // 멈춤선 제안 2026-11-01 (사용자 확정 전)
+  const LINES = { ddWarn: 0.23, ddStop: 0.35, floorRatio: 0.65, streak: { v5: 8, A0: 10 }, staleMin: 250 }; // 멈춤선 — 팀 제안 2026-11-01 · 사용자 확정 2026-11-02 (알림.py 기본값과 같음)
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const pad = (n) => String(n).padStart(2, "0");
@@ -574,7 +574,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   function drawFoot() {
     const f = $("#foot"); f.replaceChildren();
     if (S.d) f.append(el("div", null, `자료: 봇이 올린 대시보드 (만든시각 ${S.d.만든시각 || "—"}) · 이 화면 확인 ${S.checked ? kst(S.checked, false) : "—"} · ${S.d.실전메모 || ""}`));
-    f.append(el("div", null, "멈춤선 숫자 (23% · 35% · 바닥 65% · 연속 8 · 10) 는 2026-11-01 팀 제안값이고 아직 확정 전이에요. 바뀌면 이 화면도 고쳐요. 투자 추천이 아니에요."));
+    f.append(el("div", null, "멈춤선 숫자 (보고 23% · 멈춤 35% · 바닥 65% = 약 1,254 USDT · 연속 손절 8 · 10) 는 2026-11-02 에 확정한 값이에요 (팀 제안 그대로). 서버 알림도 같은 숫자로 4시간마다 재요. 바뀌면 이 화면도 고쳐요. 투자 추천이 아니에요."));
     const dt = el("details"); const sm = el("summary", "muted", "gist 번호 바꾸기"); const box = el("div", "setup");
     const inp = el("input"); inp.id = "gistInput"; inp.placeholder = "gist 번호 (32글자)"; inp.autocomplete = "off"; inp.spellcheck = false; try { inp.value = localStorage.getItem("gist") || ""; } catch (e) {}
     const btn = el("button", null, "저장하고 다시 읽기"); btn.type = "button";
