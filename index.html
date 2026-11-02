@@ -13,8 +13,9 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
-/* 레이아웃: 아이폰 설정 앱처럼 — 큰 제목 + 묶음 카드 (상태 → 포지션 → 멈춤선 → 성적 → 거래). 숫자는 폰 글꼴 (SF) 그대로. 국내 표기: 이익 빨강 · 손실 파랑. 상태색 (초록·주황·빨강) 은 봇 건강용. */
+/* 레이아웃: 아이폰 앱처럼 — 아래 탭 메뉴 (현황 · 차트 · 거래 · 설정) 로 화면을 나누고, 탭마다 큰 제목 + 묶음 카드. 숫자는 폰 글꼴 (SF) 그대로. 국내 표기: 이익 빨강 · 손실 파랑. 상태색 (초록·주황·빨강) 은 봇 건강용. */
 :root {
   --bg: #f2f2f7; --card: #ffffff; --card2: #f6f6fa;
   --ink: #000000; --ink2: #6c6c70; --ink3: #8e8e93; --sep: rgba(60,60,67,.16);
@@ -23,6 +24,7 @@
   --good: #1f9d49; --warn: #c77700; --bad: #d93025;
   --track: #e5e5ea;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, "Malgun Gothic", Roboto, system-ui, sans-serif;
+  --tabbar: 50px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -68,11 +70,16 @@ body { font-family: var(--font); font-size: 17px; line-height: 1.35; -webkit-fon
 
 .page { max-width: 680px; margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 4px calc(32px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+  padding-block: 4px calc(28px + var(--tabbar) + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+.tab { display: grid; gap: 22px; }
+.tab[hidden] { display: none; }
 h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
-.sub-h1 { margin-top: 2px; font-size: 15px; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
-.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink3); vertical-align: 0; margin-right: 6px; }
+.sub-h1 { margin-top: 4px; font-size: 15px; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink3); vertical-align: 0; }
 .dot.good { background: var(--good); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+.status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--track); color: var(--ink); }
+.status.good { background: color-mix(in srgb, var(--good) 16%, var(--card)); color: var(--good); }
+.status.bad { background: color-mix(in srgb, var(--bad) 14%, var(--card)); color: var(--bad); }
 
 section.group { display: grid; gap: 8px; }
 section.group > h2 { margin: 0; padding: 0 16px; font-size: 13px; font-weight: 500; color: var(--ink2); letter-spacing: .01em; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -85,14 +92,25 @@ section.group > h2 { margin: 0; padding: 0 16px; font-size: 13px; font-weight: 5
 .row .k .small { display: block; color: var(--ink2); margin-top: 1px; }
 .row .v { text-align: right; color: var(--ink2); flex-shrink: 0; }
 .row .v b { color: var(--ink); font-weight: 600; }
+.row .v b.bad { color: var(--bad); }
+.chev { color: var(--ink3); flex-shrink: 0; transition: transform .2s; display: inline-grid; }
+details[open] > summary .chev { transform: rotate(90deg); }
+summary:active .row, summary:active .trade { background: var(--card2); }
 
-/* 영웅 숫자 */
-.hero { padding: 16px 16px 14px; display: grid; gap: 14px; }
-.hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+/* 영웅 숫자: 자산 하나 크게 + 작은 셋 */
+.hero { padding: 18px 16px 16px; display: grid; gap: 14px; }
+.hero .lead { display: grid; gap: 4px; }
+.hero .lead .l { font-size: 13px; color: var(--ink2); }
+.hero .lead .n { font-size: 38px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+.hero .lead .s { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink2); margin-top: 2px; }
+.pill { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--track); color: var(--ink); }
+.pill.up { background: color-mix(in srgb, var(--up) 14%, var(--card)); color: var(--up); }
+.pill.down { background: color-mix(in srgb, var(--down) 14%, var(--card)); color: var(--down); }
+.hero-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 14px; border-top: 1px solid var(--sep); }
 .stat { display: grid; gap: 2px; min-width: 0; }
-.stat .l { font-size: 13px; color: var(--ink2); }
-.stat .n { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
-.stat .s { font-size: 13px; color: var(--ink2); }
+.stat .l { font-size: 12px; color: var(--ink2); }
+.stat .n { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.stat .s { font-size: 12px; color: var(--ink2); }
 .big { font-size: 30px; font-weight: 700; letter-spacing: -0.015em; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--track); color: var(--ink); }
 .chip.v5 { background: color-mix(in srgb, #a86b12 18%, var(--card)); color: #8a5810; }
@@ -104,7 +122,7 @@ section.group > h2 { margin: 0; padding: 0 16px; font-size: 13px; font-weight: 5
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--track); gap: 2px; }
 .seg button { appearance: none; border: 0; background: transparent; color: var(--ink2); font: inherit; font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 6px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
-#chart { height: 280px; width: 100%; position: relative; }
+#chart { height: 300px; width: 100%; position: relative; }
 #chart .empty { position: absolute; inset: 0; display: grid; place-items: center; }
 .why-wrap { border-top: 1px solid var(--sep); padding: 12px 16px 14px; display: grid; gap: 10px; }
 .why-wrap .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -157,8 +175,6 @@ details summary::-webkit-details-marker { display: none; }
 .trade .r { text-align: right; flex-shrink: 0; display: grid; gap: 1px; }
 .trade .r .R { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .trade .r .usd { font-size: 13px; color: var(--ink2); }
-.trade .chev { color: var(--ink3); flex-shrink: 0; transition: transform .2s; }
-details[open] .trade .chev { transform: rotate(90deg); }
 .detail { padding: 2px 16px 14px; display: grid; gap: 10px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; margin: 0; }
 .kv dt { color: var(--ink2); }
@@ -172,17 +188,31 @@ details[open] .trade .chev { transform: rotate(90deg); }
 .empty { padding: 22px 16px; text-align: center; color: var(--ink2); font-size: 15px; }
 .banner { background: color-mix(in srgb, var(--bad) 12%, var(--card)); color: var(--ink); border-radius: 14px; padding: 12px 16px; font-size: 15px; display: grid; gap: 4px; }
 .banner.ok { background: color-mix(in srgb, var(--warn) 14%, var(--card)); }
-footer { color: var(--ink2); font-size: 13px; display: grid; gap: 8px; padding: 0 16px; line-height: 1.5; }
-footer input { font: inherit; font-size: 15px; width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--sep); background: var(--card); color: var(--ink); }
-footer button { font: inherit; font-size: 15px; font-weight: 600; padding: 10px 14px; border-radius: 10px; border: 0; background: var(--tint); color: #fff; cursor: pointer; }
-footer .setup { display: grid; gap: 8px; margin-top: 6px; }
+.banner[hidden] { display: none; }                               /* display:grid 가 hidden 을 이기지 않게 */
+
+/* 설정 탭 */
+.note { color: var(--ink2); font-size: 13px; padding: 0 16px; line-height: 1.5; }
+.setup { display: grid; gap: 8px; padding: 4px 16px 14px; }
+.setup input { font: inherit; font-size: 15px; width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--sep); background: var(--card2); color: var(--ink); }
+.setup button { font: inherit; font-size: 15px; font-weight: 600; padding: 10px 14px; border-radius: 10px; border: 0; background: var(--tint); color: #fff; cursor: pointer; }
+
+/* 아래 탭 메뉴 (아이폰 탭 바) */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--sep); }
+.tabbar-in { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 680px; margin: 0 auto; height: var(--tabbar); }
+.tabbar button { appearance: none; border: 0; background: transparent; color: var(--ink3); font: inherit; padding: 0; cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 2px; }
+.tabbar button svg { width: 26px; height: 26px; }
+.tabbar button span { font-size: 10px; font-weight: 500; letter-spacing: .01em; }
+.tabbar button[aria-current="page"] { color: var(--tint); }
+.tabbar button[aria-current="page"] svg { stroke-width: 2.2; }
 :focus-visible { outline: 2px solid var(--tint); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <header class="bar" id="bar">
   <div class="bar-in">
-    <div class="bar-title">BTC 봇 현황</div>
+    <div class="bar-title" id="barTitle">BTC 봇</div>
     <button class="icon-btn" id="btnRefresh" type="button" aria-label="새로 고침" title="새로 고침">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
     </button>
@@ -190,50 +220,75 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
 </header>
 
 <main class="page">
-  <div>
-    <h1 id="h1">BTC 봇 현황</h1>
-    <div class="sub-h1" id="subh1"><span><span class="dot"></span>자료 읽는 중…</span></div>
-  </div>
-
   <div id="banner" hidden></div>
 
-  <section class="group" aria-labelledby="h-now">
-    <h2 id="h-now">지금</h2>
-    <div class="card hero" id="hero"></div>
-  </section>
-
-  <section class="group" aria-labelledby="h-pos">
-    <h2 id="h-pos"><span>포지션</span><span class="tag" id="posTag"></span></h2>
-    <div class="card" id="pos"></div>
-  </section>
-
-  <section class="group" aria-labelledby="h-chart">
-    <h2 id="h-chart"><span>차트 · 진입 근거</span>
-      <span class="seg" role="group" aria-label="봉"><button type="button" data-tf="4H" aria-pressed="true">4시간</button><button type="button" data-tf="1Dutc" aria-pressed="false">일봉</button></span>
-    </h2>
-    <div class="card">
-      <div id="chart" role="img" aria-label="비트코인 봉 차트와 실전 진입·청산 화살표"><div class="empty">봉 자료 읽는 중…</div></div>
-      <div id="why" class="why-wrap"></div>
+  <div class="tab" data-tab="home">
+    <div>
+      <h1>BTC 봇</h1>
+      <div class="sub-h1" id="subh1"><span><span class="dot"></span> 자료 읽는 중…</span></div>
     </div>
-  </section>
+    <section class="group" aria-labelledby="h-now">
+      <h2 id="h-now">지금</h2>
+      <div class="card hero" id="hero"></div>
+    </section>
+    <section class="group" aria-labelledby="h-pos">
+      <h2 id="h-pos"><span>포지션</span><span class="tag" id="posTag"></span></h2>
+      <div class="card" id="pos"></div>
+    </section>
+    <section class="group" aria-labelledby="h-lim">
+      <h2 id="h-lim"><span>멈춤선</span><span class="tag">확정 2026-11-02</span></h2>
+      <div class="card" id="limits"></div>
+    </section>
+  </div>
 
-  <section class="group" aria-labelledby="h-lim">
-    <h2 id="h-lim"><span>멈춤선</span><span class="tag">확정 2026-11-02</span></h2>
-    <div class="card" id="limits"></div>
-  </section>
+  <div class="tab" data-tab="chart" hidden>
+    <div>
+      <h1>차트</h1>
+      <div class="sub-h1"><span>OKX 봉 300개 · ▲ 진입 ▼ 청산 · 한국 시각</span></div>
+    </div>
+    <section class="group" aria-labelledby="h-chart">
+      <h2 id="h-chart"><span>진입 근거</span>
+        <span class="seg" role="group" aria-label="봉"><button type="button" data-tf="4H" aria-pressed="true">4시간</button><button type="button" data-tf="1Dutc" aria-pressed="false">일봉</button></span>
+      </h2>
+      <div class="card">
+        <div id="chart" role="img" aria-label="비트코인 봉 차트와 실전 진입·청산 화살표"><div class="empty">봉 자료 읽는 중…</div></div>
+        <div id="why" class="why-wrap"></div>
+      </div>
+    </section>
+  </div>
 
-  <section class="group" aria-labelledby="h-sum">
-    <h2 id="h-sum"><span>전략별 성적 (실전)</span></h2>
-    <div class="card" id="sum"></div>
-  </section>
+  <div class="tab" data-tab="trades" hidden>
+    <div>
+      <h1>거래</h1>
+      <div class="sub-h1"><span>실전 기록 · 누르면 근거가 펼쳐져요</span></div>
+    </div>
+    <section class="group" aria-labelledby="h-sum">
+      <h2 id="h-sum"><span>전략별 성적 (실전)</span></h2>
+      <div class="card" id="sum"></div>
+    </section>
+    <section class="group" aria-labelledby="h-tr">
+      <h2 id="h-tr"><span>거래</span><span class="muted" id="trCount"></span></h2>
+      <div class="card" id="trades"></div>
+    </section>
+  </div>
 
-  <section class="group" aria-labelledby="h-tr">
-    <h2 id="h-tr"><span>거래</span><span class="muted" id="trCount"></span></h2>
-    <div class="card" id="trades"></div>
-  </section>
-
-  <footer id="foot"></footer>
+  <div class="tab" data-tab="settings" hidden>
+    <div>
+      <h1>설정</h1>
+      <div class="sub-h1"><span>읽기만 하는 화면 · 주문·API 키 없음</span></div>
+    </div>
+    <div id="settings" style="display:grid;gap:22px"></div>
+  </div>
 </main>
+
+<nav class="tabbar" aria-label="메뉴">
+  <div class="tabbar-in">
+    <button type="button" data-go="home" aria-label="현황" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>현황</span></button>
+    <button type="button" data-go="chart" aria-label="차트"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3M8 15v6M5 6h6v9H5zM16 3v5M16 17v4M13 8h6v9h-6z"/></svg><span>차트</span></button>
+    <button type="button" data-go="trades" aria-label="거래"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg><span>거래</span></button>
+    <button type="button" data-go="settings" aria-label="설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>설정</span></button>
+  </div>
+</nav>
 
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script>
@@ -241,8 +296,10 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   // 봇 (Vultr) 이 4시간봉마다 올리는 비밀 gist 의 실전_대시보드.json 을 읽기만 함. 주문·키 없음.
   // 차트 봉은 OKX 공개 시세 (최근 300개) · 화살표 = 실전 거래 (▲ 진입 초록 · ▼ 청산 빨강, 사용자 10-19) · 시각은 한국.
   // gist 번호는 주소의 #gist=… 로 한 번 넣으면 이 기기에 저장됨 (파일 안에는 번호를 안 둠).
+  // 화면은 아래 탭 (현황 · 차트 · 거래 · 설정) 으로 나뉨. 마지막에 본 탭은 이 기기에 기억.
   const USER = "wnsduquu-stack";
   const LINES = { ddWarn: 0.23, ddStop: 0.35, floorRatio: 0.65, streak: { v5: 8, A0: 10 }, staleMin: 250 }; // 멈춤선 — 팀 제안 2026-11-01 · 사용자 확정 2026-11-02 (알림.py 기본값과 같음)
+  const TABS = { home: "BTC 봇", chart: "차트", trades: "거래", settings: "설정" };
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const pad = (n) => String(n).padStart(2, "0");
@@ -254,18 +311,20 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   const sUsd = (x) => x == null || !isFinite(x) ? "—" : (x > 0 ? "+" : "") + num(x, 1) + " USDT";
   const cls = (x) => x > 0 ? "up" : x < 0 ? "down" : "";
   const ago = (ms) => { const m = Math.max(0, Math.round((Date.now() - ms) / 60000)); return m < 1 ? "방금" : m < 60 ? `${m}분 전` : `${Math.floor(m / 60)}시간 ${m % 60}분 전`; };
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
   const S = { d: null, price: null, checked: null };
 
   function gistId() {
     const h = new URLSearchParams(location.hash.slice(1)).get("gist") || new URLSearchParams(location.search).get("gist");
-    try { if (h) localStorage.setItem("gist", h); return h || localStorage.getItem("gist"); } catch (e) { return h; }
+    if (h) store("gist", h);
+    return h || store("gist");
   }
 
   async function load(manual) {
     const btn = $("#btnRefresh"); btn.classList.add("spin");
     if (manual) C.candles = {};                                  // 손으로 새로 고치면 봉도 다시 받음
     const id = gistId();
-    if (!id) { btn.classList.remove("spin"); return setup("gist 번호가 없어요. 팀장이 준 주소 (#gist=… 붙은 것) 로 한 번 열거나 아래 칸에 번호를 넣어 주세요."); }
+    if (!id) { btn.classList.remove("spin"); return setup("gist 번호가 없어요. 팀장이 준 주소 (#gist=… 붙은 것) 로 한 번 열거나 설정 탭에 번호를 넣어 주세요."); }
     try {
       const r = await fetch(`https://gist.githubusercontent.com/${USER}/${id}/raw/?_=${Date.now()}`, { cache: "no-store" });
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -291,7 +350,27 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
     $("#posTag").hidden = true; $("#trCount").textContent = "";
     ["#hero", "#pos", "#limits", "#sum", "#trades", "#why"].forEach((s) => $(s).replaceChildren(el("div", "empty", "—")));
     if (!C.chart) $("#chart").replaceChildren(el("div", "empty", "—"));
-    drawFoot();
+    drawSettings();
+  }
+
+  // ---- 탭 (아래 메뉴) ----
+  const activeTab = () => { const t = document.querySelector(".tab:not([hidden])"); return t ? t.dataset.tab : "home"; };
+  function showTab(name) {
+    if (!TABS[name]) name = "home";
+    document.querySelectorAll(".tab").forEach((t) => { t.hidden = t.dataset.tab !== name; });
+    document.querySelectorAll(".tabbar [data-go]").forEach((b) => { if (b.dataset.go === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    $("#barTitle").textContent = TABS[name]; $("#bar").classList.remove("solid");
+    window.scrollTo(0, 0); store("tab", name);
+    if (name === "chart" && S.d) drawChart();                   // 차트는 탭을 열 때 그림 (숨긴 칸에 그리면 크기 0)
+  }
+  document.querySelectorAll(".tabbar [data-go]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.go)));
+
+  // ---- 테마 (설정 탭) ----
+  const theme = () => store("theme") || "auto";
+  function setTheme(v) {
+    store("theme", v);
+    if (v === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
+    applyTheme();
   }
 
   // ---- 셈 ----
@@ -350,7 +429,8 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   // ---- 그리기 ----
   function render() {
     const A = analyze(S.d); if (!C.sel || !A.tr.some((t) => t.id === C.sel)) { const last = A.tr.slice().sort((a, b) => (b._in || 0) - (a._in || 0))[0]; C.sel = last ? last.id : null; }
-    drawTitle(); drawHero(); drawPos(); drawLimits(); drawSum(); drawTrades(); drawFoot(); drawChart();
+    drawTitle(); drawHero(); drawPos(); drawLimits(); drawSum(); drawTrades(); drawSettings();
+    if (activeTab() === "chart") drawChart(); else drawWhy();
   }
 
   // ---- 차트 ----
@@ -414,7 +494,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
   }
   function select(id, move) {
     C.sel = id; setMarkers(); drawWhy();
-    if (move) { focusSel(); $("#chart").scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+    if (move) { showTab("chart"); $("#chart").scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
   }
   function drawWhy() {
     const w = $("#why"); w.replaceChildren(); if (!S.d) return;
@@ -446,8 +526,8 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
 
   function drawTitle() {
     const h = health(); const s = $("#subh1"); s.replaceChildren();
-    const a = el("span"); a.append(Object.assign(el("span", "dot " + (h.ok ? "good" : "bad")), {}), h.ok ? "봇 정상" : "갱신 늦음");
-    s.append(a, el("span", null, "봇 갱신 " + (h.made ? ago(h.made) : "—")));
+    const p = el("span", "status " + (h.ok ? "good" : "bad")); p.append(el("span", "dot " + (h.ok ? "good" : "bad")), h.ok ? "봇 정상" : "갱신 늦음");
+    s.append(p, el("span", null, "봇 갱신 " + (h.made ? ago(h.made) : "—")));
   }
 
   function nextClose() {
@@ -459,15 +539,20 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
 
   function drawHero() {
     const A = analyze(S.d); const h = health(); const nc = nextClose(); const box = $("#hero"); box.replaceChildren();
+    const lead = el("div", "lead"); const diff = A.cur != null && A.start != null ? A.cur - A.start : null;
+    lead.append(el("span", "l", "자산 (닫힌 거래 기준)"), el("span", "n num", A.cur == null ? "—" : num(A.cur, 0) + " USDT"));
+    const s = el("span", "s");
+    s.append(el("span", "pill num " + cls(diff), diff == null ? "자본 칸 없음" : `${sUsd(diff)} · ${diff > 0 ? "+" : ""}${pct(diff / A.start, 1)}`));
+    if (A.start != null) s.append(el("span", "num", `시작 ${num(A.start, 0)}`));
+    lead.append(s); box.append(lead);
     const g = el("div", "hero-grid");
-    const stat = (l, n, s, c) => { const d = el("div", "stat"); d.append(el("span", "l", l), el("span", "n num " + (c || ""), n), el("span", "s", s)); return d; };
-    g.append(stat("자산 (닫힌 거래 기준)", A.cur == null ? "—" : num(A.cur, 0) + " USDT", A.start == null ? "자본 칸 없음" : `시작 ${num(A.start, 0)} · ${sUsd(A.cur - A.start)}`, cls(A.cur - A.start)));
+    const stat = (l, n, sub, c) => { const d = el("div", "stat"); d.append(el("span", "l", l), el("span", "n num " + (c || ""), n), el("span", "s num", sub)); return d; };
     if (S.price) {
       const ch = S.price.open24h ? (S.price.last - S.price.open24h) / S.price.open24h : null;
-      g.append(stat("BTC 지금 (OKX 무기한)", num(S.price.last, 0), `24시간 ${ch == null ? "—" : (ch > 0 ? "+" : "") + pct(ch, 2)}`, cls(ch)));
-    } else g.append(stat("BTC 지금", "—", "가격을 못 읽었어요"));
-    g.append(stat("다음 4시간봉 마감까지", nc.text, `한국 ${kst(nc.at, false)} 마감 · 봇은 1분 뒤 돎`));
-    g.append(stat("봇 마지막 갱신", h.made ? kst(h.made, false) : "—", h.made ? `${ago(h.made)} · ${h.ok ? "4시간 안" : "4시간 넘음 → 서버 확인"}` : "", h.ok ? "" : "bad"));
+      g.append(stat("BTC 지금", num(S.price.last, 0), `24시간 ${ch == null ? "—" : (ch > 0 ? "+" : "") + pct(ch, 2)}`, cls(ch)));
+    } else g.append(stat("BTC 지금", "—", "가격 못 읽음"));
+    g.append(stat("다음 마감까지", nc.text, `한국 ${kst(nc.at, false)} 마감`));
+    g.append(stat("봇 갱신", h.made ? kst(h.made, false) : "—", h.made ? (h.ok ? ago(h.made) : "4시간 넘음 → 서버 확인") : "", h.ok ? "" : "bad"));
     box.append(g);
   }
 
@@ -546,6 +631,8 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
     const n = el("div", "row"); n.append(el("div", "k small muted", "PF = 번 돈 ÷ 잃은 돈 (1 넘어야 이익) · R = 한 번에 건 위험 (자산 1%) 의 몇 배. 실전 손익은 체결가·수수료만, 펀딩 안 셈.")); box.append(n);
   }
 
+  const chevron = () => { const c = el("span", "chev"); c.innerHTML = '<svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l6 6-6 6"/></svg>'; return c; };
+
   function drawTrades() {
     const A = analyze(S.d); const box = $("#trades"); box.replaceChildren();
     const list = A.tr.slice().sort((a, b) => (b._in || 0) - (a._in || 0));
@@ -558,8 +645,7 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
       const why = String(t.청산이유 || "—"); const shortWhy = why.includes("손절") ? "손절" : /10/.test(why) ? "10봉 출구" : why;
       mid.append(el("div", "when num", `진입 ${kst(t._in)} · ${num(t.진입가, 0)}`), el("div", "why num", t._out ? `청산 ${kst(t._out)} · ${shortWhy}` : `들고 있음 · 손절선 ${num(t.손절선, 0)}`));
       const r = el("div", "r"); r.append(el("div", "R num " + (t.R == null ? "" : cls(t.R)), t.R == null ? "열림" : sR(t.R)), el("div", "usd num", t.손익 == null ? "" : sUsd(t.손익)));
-      const chev = el("span", "chev"); chev.innerHTML = '<svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l6 6-6 6"/></svg>';
-      row.append(mid, r, chev); sm.append(row);
+      row.append(mid, r, chevron()); sm.append(row);
       const det = el("div", "detail"); const kv = el("dl", "kv");
       const kvr = (k, v) => kv.append(el("dt", null, k), el("dd", null, v));
       kvr("번호", t.id || "—"); kvr("진입가", num(t.진입가, 1)); kvr("손절선", num(t.손절선, 1) + (t.첫손절선 && t.첫손절선 !== t.손절선 ? ` (첫 ${num(t.첫손절선, 1)})` : ""));
@@ -571,24 +657,62 @@ footer .setup { display: grid; gap: 8px; margin-top: 6px; }
     });
   }
 
-  function drawFoot() {
-    const f = $("#foot"); f.replaceChildren();
-    if (S.d) f.append(el("div", null, `자료: 봇이 올린 대시보드 (만든시각 ${S.d.만든시각 || "—"}) · 이 화면 확인 ${S.checked ? kst(S.checked, false) : "—"} · ${S.d.실전메모 || ""}`));
-    f.append(el("div", null, "멈춤선 숫자 (보고 23% · 멈춤 35% · 바닥 65% = 약 1,254 USDT · 연속 손절 8 · 10) 는 2026-11-02 에 확정한 값이에요 (팀 제안 그대로). 서버 알림도 같은 숫자로 4시간마다 재요. 바뀌면 이 화면도 고쳐요. 투자 추천이 아니에요."));
-    const dt = el("details"); const sm = el("summary", "muted", "gist 번호 바꾸기"); const box = el("div", "setup");
-    const inp = el("input"); inp.id = "gistInput"; inp.placeholder = "gist 번호 (32글자)"; inp.autocomplete = "off"; inp.spellcheck = false; try { inp.value = localStorage.getItem("gist") || ""; } catch (e) {}
+  // ---- 설정 탭 (gist 번호 · 테마 · 멈춤선 숫자 · 정보) ----
+  function drawSettings() {
+    const box = $("#settings"); box.replaceChildren();
+    const row = (k, sub, v, tone) => {
+      const r = el("div", "row"); const kk = el("div", "k"); kk.append(k); if (sub) kk.append(el("span", "small", sub));
+      const vv = el("div", "v num"); if (v != null) vv.append(typeof v === "string" ? el("b", tone || null, v) : v);
+      r.append(kk, vv); return r;
+    };
+    const group = (title, items, note) => {
+      const s = el("section", "group"); if (title) s.append(el("h2", null, title));
+      const c = el("div", "card"); items.forEach((x) => c.append(x)); s.append(c);
+      if (note) s.append(el("div", "note", note)); box.append(s);
+    };
+    // 자료
+    const id = store("gist") || "";
+    const gd = el("details"); const gs = el("summary");
+    const gr = row("gist 번호", "봇이 올리는 비밀 자료 · 이 기기에만 저장", id ? id.slice(0, 4) + "…" + id.slice(-4) : "없음", id ? "" : "bad"); gr.append(chevron()); gs.append(gr);
+    const set = el("div", "setup");
+    const inp = el("input"); inp.id = "gistInput"; inp.placeholder = "gist 번호 (32글자)"; inp.autocomplete = "off"; inp.spellcheck = false; inp.value = id;
     const btn = el("button", null, "저장하고 다시 읽기"); btn.type = "button";
-    btn.addEventListener("click", () => { const v = inp.value.trim(); if (!/^[0-9a-f]{20,40}$/i.test(v)) { inp.focus(); return; } try { localStorage.setItem("gist", v); } catch (e) {} history.replaceState(null, "", location.pathname + "#gist=" + v); load(true); });
-    box.append(inp, btn); dt.append(sm, box); f.append(dt);
+    btn.addEventListener("click", () => { const v = inp.value.trim(); if (!/^[0-9a-f]{20,40}$/i.test(v)) { inp.focus(); return; } store("gist", v); history.replaceState(null, "", location.pathname + "#gist=" + v); load(true); });
+    set.append(inp, btn); gd.append(gs, set);
+    group("자료", [gd,
+      row("봇 자료 시각", "gist 만든시각 (UTC) · 4시간봉마다 올림", S.d ? (S.d.만든시각 || "—") : "—"),
+      row("이 화면 확인", "5분마다 · 앱으로 돌아오면 다시 읽음", S.checked ? kst(S.checked, false) : "—"),
+    ], S.d && S.d.실전메모 ? "봇 메모: " + S.d.실전메모 : "");
+    // 화면
+    const seg = el("span", "seg");
+    [["auto", "자동"], ["light", "밝게"], ["dark", "어둡게"]].forEach(([v, l]) => {
+      const b = el("button", null, l); b.type = "button"; b.setAttribute("aria-pressed", String(theme() === v));
+      b.addEventListener("click", () => { setTheme(v); seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }); seg.append(b);
+    });
+    group("화면", [row("테마", "자동 = 폰 설정 따라감", seg), row("홈 화면에 추가", "Safari 공유 → 홈 화면에 추가 · 안드로이드는 Chrome 메뉴 ⋮", null)]);
+    // 멈춤선
+    group("멈춤선 숫자 (확정 2026-11-02)", [
+      row("낙폭", "고점에서 빠진 폭", `보고 ${pct(LINES.ddWarn, 0)} · 멈춤 ${pct(LINES.ddStop, 0)}`),
+      row("돈 한도", "시작 돈의 이 비율이 바닥", `바닥 ${pct(LINES.floorRatio, 0)}`),
+      row("연속 손절", "여기 닿으면 그 전략 멈춤", `v5 ${LINES.streak.v5} · A0 ${LINES.streak.A0}`),
+      row("갱신 늦음 기준", "봇 자료가 이보다 오래되면 빨강", `${LINES.staleMin}분`),
+    ], "팀 제안 그대로 사용자가 확정한 값 · 서버 알림도 같은 숫자로 4시간마다 재요 · 바뀌면 이 화면도 고쳐요.");
+    // 정보
+    group("정보", [
+      row("자료 출처", "", "GitHub gist · OKX 공개 시세"),
+      row("손익 기준", "", "체결가·수수료만 · 펀딩 안 셈"),
+    ], "이 화면은 읽기만 해요 (주문·API 키·서버 접속 없음). 투자 추천이 아니에요.");
   }
 
-  // 위 막대: 큰 제목이 화면 밖으로 나가면 작은 제목 보이기
-  new IntersectionObserver(([e]) => $("#bar").classList.toggle("solid", !e.isIntersecting), { rootMargin: "-56px 0px 0px 0px" }).observe($("#h1"));
+  // 위 막대: 보이는 탭의 큰 제목이 화면 밖으로 나가면 작은 제목 보이기
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.target.closest(".tab").hidden) $("#bar").classList.toggle("solid", !e.isIntersecting); }), { rootMargin: "-56px 0px 0px 0px" });
+  document.querySelectorAll(".tab h1").forEach((h) => io.observe(h));
   $("#btnRefresh").addEventListener("click", () => load(true));
   window.addEventListener("hashchange", () => load(true));
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
   setInterval(() => { if (S.d && !document.hidden) { drawTitle(); drawHero(); } }, 60 * 1000);   // "n분 전" · 마감 카운트다운 갱신
+  showTab(store("tab") || "home");
   load();
 })();
 </script>
